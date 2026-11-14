@@ -1,0 +1,57 @@
+<resources>
+    <string name="app_name">Bitácora</string>
+
+    <!-- Login -->
+    <string name="titulo_login">Bitácora</string>
+    <string name="subtitulo_login">Inicia sesión para ver y registrar entradas</string>
+    <string name="correo">Correo</string>
+    <string name="contrasena">Contraseña</string>
+    <string name="confirmar_contrasena">Confirmar contraseña</string>
+    <string name="iniciar_sesion">Iniciar sesión</string>
+    <string name="ir_registro">¿No tienes cuenta? Crear una</string>
+    <string name="sesion_vencida">Tu sesión venció. Inicia sesión de nuevo.</string>
+    <string name="sesion_cerrada">Cerraste sesión.</string>
+
+    <!-- Registro de cuenta -->
+    <string name="titulo_registro">Crear cuenta</string>
+    <string name="subtitulo_registro">Las cuentas nuevas tienen el rol Usuario</string>
+    <string name="crear_cuenta">Crear cuenta</string>
+    <string name="volver_login">Ya tengo cuenta</string>
+    <string name="cuenta_creada">Cuenta creada. Ahora inicia sesión.</string>
+    <string name="ayuda_contrasena">Mínimo 8 caracteres, con letras y números</string>
+
+    <!-- Validaciones -->
+    <string name="error_correo">Escribe un correo válido</string>
+    <string name="error_contrasena_vacia">Escribe tu contraseña</string>
+    <string name="error_contrasena_regla">Mínimo 8 caracteres, con al menos una letra y un número</string>
+    <string name="error_contrasena_no_coincide">Las contraseñas no coinciden</string>
+    <string name="error_titulo">El título debe tener entre 3 y 100 caracteres</string>
+    <string name="error_descripcion">La descripción es obligatoria (máximo 500 caracteres)</string>
+
+    <!-- Lista -->
+    <string name="subtitulo_sesion">%1$s (%2$s) · vence %3$s</string>
+    <string name="sin_registros">Todavía no hay registros. Toca + para crear uno.</string>
+    <string name="autor_yo">Tú</string>
+    <string name="editar">Editar</string>
+    <string name="eliminar">Eliminar</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="recargar">Recargar</string>
+    <string name="cerrar_sesion">Cerrar sesión</string>
+    <string name="confirmar_cerrar_sesion">Se borrará la sesión guardada en este dispositivo.</string>
+    <string name="confirmar_eliminar_titulo">¿Eliminar registro?</string>
+    <string name="confirmar_eliminar_mensaje">Se eliminará «%1$s». Esta acción no se puede deshacer.</string>
+    <string name="registro_eliminado">Registro eliminado</string>
+    <string name="nuevo">Nuevo registro</string>
+
+    <!-- Formulario -->
+    <string name="nuevo_registro">Nuevo registro</string>
+    <string name="editar_registro">Editar registro</string>
+    <string name="titulo">Título</string>
+    <string name="descripcion">Descripción</string>
+    <string name="dictar">Dictar descripción</string>
+    <string name="dicta_descripcion">Dicta la descripción del registro</string>
+    <string name="sin_reconocimiento_voz">Este dispositivo no tiene reconocimiento de voz.</string>
+    <string name="guardar">Guardar</string>
+    <string name="registro_guardado">Registro guardado</string>
+    <string name="info_registro">Creado por %1$s · %2$s</string>
+</resources>
