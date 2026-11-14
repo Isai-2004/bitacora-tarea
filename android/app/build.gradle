@@ -47,6 +47,7 @@ dependencies {
     implementation libs.retrofit.gson
     implementation libs.okhttp
     implementation libs.okhttp.logging
+    implementation libs.volley
     implementation libs.androidx.security.crypto
     testImplementation libs.junit
 }
