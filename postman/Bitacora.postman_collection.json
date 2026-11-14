@@ -1,0 +1,1295 @@
+{
+  "info": {
+    "_postman_id": "f1590eb9-7250-4f27-8eab-a168aa586b1a",
+    "name": "Bitácora API - Seguridad JWT",
+    "description": "Pruebas de la API con autenticación JWT y autorización por roles.\n\nAntes de ejecutar: en el entorno 'Bitacora - Local' completa adminCorreo, adminContrasena (los mismos de user-secrets) y, para la prueba de token vencido, jwtClave. Ejecuta la colección completa en orden con el Runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{tokenUsuarioA}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "1.1 Registrar usuario A (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "registro"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoA}}\",\n  \"contrasena\": \"{{contrasenaPrueba}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Correos únicos en cada ejecución para que la colección se pueda repetir.",
+                  "const marca = Date.now();",
+                  "pm.environment.set(\"correoA\", `ana.${marca}@prueba.com`);",
+                  "pm.environment.set(\"correoB\", `beto.${marca}@prueba.com`);",
+                  "if (!pm.environment.get(\"contrasenaPrueba\")) pm.environment.set(\"contrasenaPrueba\", \"Clave1234\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 Created\", () => pm.response.to.have.status(201));",
+                  "const u = pm.response.json();",
+                  "pm.test(\"Se crea con el rol Usuario\", () => pm.expect(u.rol).to.eql(\"Usuario\"));",
+                  "pm.test(\"No devuelve la contraseña ni su hash\", () => {",
+                  "    pm.expect(u).to.not.have.property(\"contrasena\");",
+                  "    pm.expect(u).to.not.have.property(\"contrasenaHash\");",
+                  "});",
+                  "pm.environment.set(\"usuarioAId\", u.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.2 Registrar usuario B (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "registro"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoB}}\",\n  \"contrasena\": \"{{contrasenaPrueba}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 Created\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.3 Registrar correo repetido (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "registro"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoA}}\",\n  \"contrasena\": \"{{contrasenaPrueba}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409 Conflict\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Responde con ProblemDetails\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json()).to.have.property(\"title\");",
+                  "});",
+                  "const claves = Object.keys(pm.response.json().errors || {}).map(k => k.toLowerCase());",
+                  "pm.test(\"Informa el campo inválido: Correo\", () => pm.expect(claves).to.include(\"correo\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.4 Registrar con datos inválidos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "registro"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"esto-no-es-un-correo\",\n  \"contrasena\": \"corta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const claves = Object.keys(pm.response.json().errors || {}).map(k => k.toLowerCase());",
+                  "pm.test(\"Informa el campo inválido: Correo\", () => pm.expect(claves).to.include(\"correo\"));",
+                  "pm.test(\"Informa el campo inválido: Contrasena\", () => pm.expect(claves).to.include(\"contrasena\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.5 Login usuario A (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoA}}\",\n  \"contrasena\": \"{{contrasenaPrueba}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve un JWT (tres partes)\", () => pm.expect(r.token.split(\".\")).to.have.lengthOf(3));",
+                  "pm.test(\"Tipo de token Bearer\", () => pm.expect(r.tipoToken).to.eql(\"Bearer\"));",
+                  "pm.test(\"Rol Usuario\", () => pm.expect(r.rol).to.eql(\"Usuario\"));",
+                  "pm.test(\"Vence en unos 10 minutos\", () => {",
+                  "    const minutos = (new Date(r.expira) - Date.now()) / 60000;",
+                  "    pm.expect(minutos).to.be.within(9, 10.1);",
+                  "});",
+                  "pm.environment.set(\"tokenUsuarioA\", r.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.6 Login usuario B (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoB}}\",\n  \"contrasena\": \"{{contrasenaPrueba}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve un JWT (tres partes)\", () => pm.expect(r.token.split(\".\")).to.have.lengthOf(3));",
+                  "pm.test(\"Tipo de token Bearer\", () => pm.expect(r.tipoToken).to.eql(\"Bearer\"));",
+                  "pm.test(\"Rol Usuario\", () => pm.expect(r.rol).to.eql(\"Usuario\"));",
+                  "pm.test(\"Vence en unos 10 minutos\", () => {",
+                  "    const minutos = (new Date(r.expira) - Date.now()) / 60000;",
+                  "    pm.expect(minutos).to.be.within(9, 10.1);",
+                  "});",
+                  "pm.environment.set(\"tokenUsuarioB\", r.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.7 Login Admin (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{adminCorreo}}\",\n  \"contrasena\": \"{{adminContrasena}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get(\"adminCorreo\") || !pm.environment.get(\"adminContrasena\")) {",
+                  "    console.warn(\"Configura adminCorreo y adminContrasena en el entorno (los mismos de user-secrets).\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Devuelve un JWT (tres partes)\", () => pm.expect(r.token.split(\".\")).to.have.lengthOf(3));",
+                  "pm.test(\"Tipo de token Bearer\", () => pm.expect(r.tipoToken).to.eql(\"Bearer\"));",
+                  "pm.test(\"Rol Admin\", () => pm.expect(r.rol).to.eql(\"Admin\"));",
+                  "pm.test(\"Vence en unos 10 minutos\", () => {",
+                  "    const minutos = (new Date(r.expira) - Date.now()) / 60000;",
+                  "    pm.expect(minutos).to.be.within(9, 10.1);",
+                  "});",
+                  "pm.environment.set(\"tokenAdmin\", r.token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Registros (token de Usuario)",
+      "item": [
+        {
+          "name": "2.1 Crear registro (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Inspección del área norte\",\n  \"descripcion\": \"Se revisaron los extintores y todos están vigentes.\",\n  \"fotoBase64\": null,\n  \"fechaCreacion\": \"2000-01-01T00:00:00Z\",\n  \"usuarioId\": 999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 Created\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Incluye encabezado Location\", () => pm.response.to.have.header(\"Location\"));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"El dueño es el usuario del token\", () => {",
+                  "    pm.expect(r.usuarioId).to.eql(Number(pm.environment.get(\"usuarioAId\")));",
+                  "    pm.expect(r.creadoPor).to.eql(pm.environment.get(\"correoA\"));",
+                  "});",
+                  "pm.test(\"La fecha la asigna el servidor\", () => pm.expect(r.fechaCreacion).to.not.include(\"2000-01-01\"));",
+                  "pm.environment.set(\"registroAId\", r.id);",
+                  "pm.environment.set(\"fechaCreacion\", r.fechaCreacion);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.2 Crear registro con foto (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Registro con foto\",\n  \"descripcion\": \"Foto de prueba de 1x1 píxel.\",\n  \"fotoBase64\": \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 Created\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Guarda la foto\", () => pm.expect(pm.response.json().fotoBase64).to.be.a(\"string\"));",
+                  "pm.environment.set(\"registroFotoId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.3 Crear registro inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"ab\",\n  \"descripcion\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const claves = Object.keys(pm.response.json().errors || {}).map(k => k.toLowerCase());",
+                  "pm.test(\"Informa el campo inválido: Titulo\", () => pm.expect(claves).to.include(\"titulo\"));",
+                  "pm.test(\"Informa el campo inválido: Descripcion\", () => pm.expect(claves).to.include(\"descripcion\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.4 Listar registros (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json();",
+                  "pm.test(\"Devuelve un arreglo con registros\", () => pm.expect(lista).to.be.an(\"array\").that.is.not.empty);",
+                  "pm.test(\"No incluye la foto completa\", () => lista.forEach(r => pm.expect(r).to.not.have.property(\"fotoBase64\")));",
+                  "pm.test(\"Indica quién creó cada registro\", () => lista.forEach(r => pm.expect(r.creadoPor).to.be.a(\"string\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.5 Consultar registro con foto (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros/{{registroFotoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "{{registroFotoId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Incluye la foto\", () => pm.expect(pm.response.json().fotoBase64).to.be.a(\"string\").and.not.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.6 Consultar registro inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "999999"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Responde con ProblemDetails\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json()).to.have.property(\"title\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.7 Actualizar registro propio (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros/{{registroAId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "{{registroAId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Inspección del área norte (revisada)\",\n  \"descripcion\": \"Dos extintores requieren recarga.\",\n  \"fotoBase64\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Aplica los cambios\", () => pm.expect(r.titulo).to.eql(\"Inspección del área norte (revisada)\"));",
+                  "pm.test(\"No cambia la fecha ni el dueño\", () => {",
+                  "    pm.expect(r.fechaCreacion).to.eql(pm.environment.get(\"fechaCreacion\"));",
+                  "    pm.expect(r.usuarioId).to.eql(Number(pm.environment.get(\"usuarioAId\")));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.8 Actualizar con datos inválidos (400)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros/{{registroAId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "{{registroAId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\n  \"descripcion\": \"Título demasiado largo.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const claves = Object.keys(pm.response.json().errors || {}).map(k => k.toLowerCase());",
+                  "pm.test(\"Informa el campo inválido: Titulo\", () => pm.expect(claves).to.include(\"titulo\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.9 Actualizar registro inexistente (404)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "999999"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"No existe\",\n  \"descripcion\": \"Este registro no existe.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Responde con ProblemDetails\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json()).to.have.property(\"title\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Seguridad - pruebas obligatorias",
+      "item": [
+        {
+          "name": "3.1 Petición sin token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros"
+              ]
+            },
+            "description": "Prueba obligatoria 1: sin el encabezado Authorization la API responde 401.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Responde con ProblemDetails\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json()).to.have.property(\"title\");",
+                  "});",
+                  "pm.test(\"Encabezado WWW-Authenticate: Bearer\", () => pm.expect(pm.response.headers.get(\"WWW-Authenticate\")).to.include(\"Bearer\"));",
+                  "pm.test(\"Pide iniciar sesión\", () => pm.expect(pm.response.json().detail).to.include(\"iniciar sesión\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.2 Usuario intenta DELETE (403)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros/{{registroAId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "{{registroAId}}"
+              ]
+            },
+            "description": "Prueba obligatoria 2: un token con rol Usuario no puede eliminar (aunque el registro sea suyo).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenUsuarioA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403 Forbidden\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Responde con ProblemDetails\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json()).to.have.property(\"title\");",
+                  "});",
+                  "pm.test(\"Indica que no tiene permiso\", () => pm.expect(pm.response.json().detail).to.include(\"permiso\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.3 Admin hace DELETE (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros/{{registroFotoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "{{registroFotoId}}"
+              ]
+            },
+            "description": "Prueba obligatoria 3: el rol Admin sí puede eliminar.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204 No Content\", () => pm.response.to.have.status(204));",
+                  "pm.test(\"Sin cuerpo\", () => pm.expect(pm.response.text()).to.eql(\"\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.4 Usuario modifica registro ajeno (403)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros/{{registroAId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "{{registroAId}}"
+              ]
+            },
+            "description": "Prueba obligatoria 4: el usuario B intenta modificar un registro creado por A.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Intento de modificación ajena\",\n  \"descripcion\": \"El usuario B intenta cambiar el registro de A.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenUsuarioB}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403 Forbidden\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Responde con ProblemDetails\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json()).to.have.property(\"title\");",
+                  "});",
+                  "pm.test(\"Explica que solo puede modificar los suyos\", () => pm.expect(pm.response.json().detail).to.include(\"tú creaste\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.5 Token alterado (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros"
+              ]
+            },
+            "description": "Prueba obligatoria 5a: el payload fue modificado (rol Admin) pero la firma es la original.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAlterado}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Toma el token del usuario A y cambia su rol a \"Admin\" en el payload sin volver a firmarlo.",
+                  "const [cabecera, payload, firma] = pm.environment.get(\"tokenUsuarioA\").split(\".\");",
+                  "const datos = JSON.parse(CryptoJS.enc.Base64.parse(payload.replace(/-/g, \"+\").replace(/_/g, \"/\")).toString(CryptoJS.enc.Utf8));",
+                  "datos.role = \"Admin\";",
+                  "const nuevoPayload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify(datos)))",
+                  "    .replace(/=+$/, \"\").replace(/\\+/g, \"-\").replace(/\\//g, \"_\");",
+                  "pm.variables.set(\"tokenAlterado\", `${cabecera}.${nuevoPayload}.${firma}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Responde con ProblemDetails\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json()).to.have.property(\"title\");",
+                  "});",
+                  "pm.test(\"Rechaza la firma\", () => pm.expect(pm.response.json().detail).to.eql(\"El token no es válido.\"));",
+                  "pm.test(\"WWW-Authenticate indica invalid_token\", () => pm.expect(pm.response.headers.get(\"WWW-Authenticate\")).to.include(\"invalid_token\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.6 Token vencido (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros"
+              ]
+            },
+            "description": "Prueba obligatoria 5b: token firmado correctamente pero con exp en el pasado. También se puede probar esperando 10 minutos con un token real.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVencido}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Construye un JWT con emisor, audiencia y firma correctos, pero que venció hace 10 minutos.",
+                  "// Usa la clave del entorno local (jwtClave), que NO se exporta ni se sube al repositorio.",
+                  "const b64url = palabras => CryptoJS.enc.Base64.stringify(palabras).replace(/=+$/, \"\").replace(/\\+/g, \"-\").replace(/\\//g, \"_\");",
+                  "const ahora = Math.floor(Date.now() / 1000);",
+                  "const cabecera = b64url(CryptoJS.enc.Utf8.parse(JSON.stringify({ alg: \"HS256\", typ: \"JWT\" })));",
+                  "const payload = b64url(CryptoJS.enc.Utf8.parse(JSON.stringify({",
+                  "    sub: String(pm.environment.get(\"usuarioAId\")),",
+                  "    email: pm.environment.get(\"correoA\"),",
+                  "    role: \"Usuario\",",
+                  "    iss: \"Bitacora.Api\",",
+                  "    aud: \"Bitacora.Clientes\",",
+                  "    iat: ahora - 1200,",
+                  "    nbf: ahora - 1200,",
+                  "    exp: ahora - 600",
+                  "})));",
+                  "const clave = pm.environment.get(\"jwtClave\") || \"clave-desconocida-solo-para-la-prueba-0000\";",
+                  "if (!pm.environment.get(\"jwtClave\")) console.warn(\"Sin jwtClave: el token se rechaza por firma, no por vencimiento.\");",
+                  "const firma = b64url(CryptoJS.HmacSHA256(`${cabecera}.${payload}`, clave));",
+                  "pm.variables.set(\"tokenVencido\", `${cabecera}.${payload}.${firma}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Responde con ProblemDetails\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json()).to.have.property(\"title\");",
+                  "});",
+                  "if (pm.environment.get(\"jwtClave\")) {",
+                  "    pm.test(\"Indica que el token venció\", () => pm.expect(pm.response.json().detail).to.include(\"venció\"));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.7 Login con contraseña incorrecta (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Prueba obligatoria 6a: el correo existe pero la contraseña es incorrecta.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoA}}\",\n  \"contrasena\": \"ContrasenaEquivocada1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Responde con ProblemDetails\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json()).to.have.property(\"title\");",
+                  "});",
+                  "const detalle = pm.response.json().detail;",
+                  "pm.test(\"Mensaje genérico\", () => pm.expect(detalle).to.eql(\"Correo o contraseña incorrectos.\"));",
+                  "pm.test(\"No devuelve token\", () => pm.expect(pm.response.json()).to.not.have.property(\"token\"));",
+                  "pm.environment.set(\"mensajeLoginFallido\", detalle);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.8 Login con correo inexistente (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Prueba obligatoria 6b: el correo no existe; la respuesta es idéntica a la 6a.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"nadie.existe@prueba.com\",\n  \"contrasena\": \"{{contrasenaPrueba}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Responde con ProblemDetails\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json()).to.have.property(\"title\");",
+                  "});",
+                  "pm.test(\"Mismo mensaje que con contraseña incorrecta (no revela cuál falló)\", () =>",
+                  "    pm.expect(pm.response.json().detail).to.eql(pm.environment.get(\"mensajeLoginFallido\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.9 Admin modifica registro ajeno (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/registros/{{registroAId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "{{registroAId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Revisado por el administrador\",\n  \"descripcion\": \"El Admin puede modificar cualquier registro.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"El dueño sigue siendo el usuario A\", () => pm.expect(pm.response.json().usuarioId).to.eql(Number(pm.environment.get(\"usuarioAId\"))));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
