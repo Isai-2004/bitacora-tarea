@@ -1,0 +1,4 @@
+# Copia este archivo como .env (en la misma carpeta) y pon tus valores. El archivo .env NO se sube al repositorio.
+JWT_CLAVE=pon-aqui-una-clave-larga-y-aleatoria-de-al-menos-32-caracteres
+ADMIN_CORREO=admin@bitacora.com
+ADMIN_CONTRASENA=pon-aqui-una-contrasena-segura
