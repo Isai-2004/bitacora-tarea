@@ -134,6 +134,10 @@ public class MainActivity extends AppCompatActivity implements RegistrosAdapter.
             cargar();
             return true;
         }
+        if (item.getItemId() == R.id.accion_laboratorio) {
+            startActivity(new Intent(this, ComparativaActivity.class));
+            return true;
+        }
         if (item.getItemId() == R.id.accion_cerrar_sesion) {
             new MaterialAlertDialogBuilder(this)
                     .setTitle(R.string.cerrar_sesion)
