@@ -7,6 +7,10 @@
         android:title="@string/recargar"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/accion_laboratorio"
+        android:title="@string/abrir_laboratorio"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/accion_cerrar_sesion"
         android:icon="@drawable/ic_cerrar_sesion"
         android:title="@string/cerrar_sesion"

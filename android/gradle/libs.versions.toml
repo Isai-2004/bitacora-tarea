@@ -8,6 +8,7 @@ recyclerview = "1.4.0"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
 securityCrypto = "1.1.0-alpha06"
+volley = "1.2.1"
 junit = "4.13.2"
 
 [libraries]
@@ -20,6 +21,7 @@ retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = 
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 

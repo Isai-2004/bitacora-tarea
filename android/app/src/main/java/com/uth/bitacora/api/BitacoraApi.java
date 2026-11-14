@@ -14,9 +14,11 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+import retrofit2.http.Url;
 
 /** Endpoints de la Bitácora API. El token lo agrega AuthInterceptor. */
 public interface BitacoraApi {
@@ -41,4 +43,11 @@ public interface BitacoraApi {
 
     @DELETE("api/registros/{id}")
     Call<Void> eliminar(@Path("id") int id);
+
+    /**
+     * Para el laboratorio de comparativa: misma consulta de listado, con la ruta del escenario
+     * y el encabezado Authorization enviado explícitamente (null = no se envía).
+     */
+    @GET
+    Call<List<RegistroResumen>> listarLaboratorio(@Url String ruta, @Header("Authorization") String autorizacion);
 }

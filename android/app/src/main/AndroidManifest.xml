@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Para saber si hay red (modo avión) en el laboratorio de comparativa. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Para encontrar la app de reconocimiento de voz (Android 11+). -->
     <queries>
@@ -37,6 +39,9 @@
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".ui.MainActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.ComparativaActivity"
             android:exported="false" />
         <activity
             android:name=".ui.FormularioRegistroActivity"

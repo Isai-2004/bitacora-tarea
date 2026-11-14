@@ -54,4 +54,16 @@
     <string name="guardar">Guardar</string>
     <string name="registro_guardado">Registro guardado</string>
     <string name="info_registro">Creado por %1$s · %2$s</string>
+
+    <!-- Laboratorio de comparativa -->
+    <string name="laboratorio">Laboratorio: Volley · OkHttp · Retrofit</string>
+    <string name="abrir_laboratorio">Laboratorio</string>
+    <string name="escenario">Escenario</string>
+    <string name="ayuda_laboratorio">API detenida y modo avión se provocan fuera de la app: detén la API o activa el modo avión y usa el escenario Normal.</string>
+    <string name="volley">Volley</string>
+    <string name="okhttp">OkHttp</string>
+    <string name="retrofit">Retrofit</string>
+    <string name="medir_promedio">Medir promedio (5 ejecuciones por librería)</string>
+    <string name="bitacora_pruebas">Resultados (también en Logcat: tag Comparativa)</string>
+    <string name="limpiar">Limpiar</string>
 </resources>

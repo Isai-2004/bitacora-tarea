@@ -122,6 +122,20 @@ La carpeta **3. Seguridad - pruebas obligatorias** cubre:
 | 5 | Token alterado / token vencido | 401 |
 | 6 | Credenciales incorrectas en el login (correo o contraseña) | 401 con el mismo mensaje |
 
+## Laboratorio: Volley vs OkHttp vs Retrofit
+
+En la app Android, menú ⋮ → **Laboratorio** (`ComparativaActivity`). Cada botón consulta `GET /api/registros` con una librería distinta y muestra la cantidad de registros, el tiempo en milisegundos y el hilo en que llegó la respuesta. Los resultados también se escriben en Logcat con el tag `Comparativa`.
+
+| Librería | Clase | Encabezado del token | JSON | Hilo de la respuesta |
+|---|---|---|---|---|
+| Volley | `laboratorio/ClienteVolley.java` | `getHeaders()` | `JsonArrayRequest` (JSONArray) | Principal |
+| OkHttp | `laboratorio/ClienteOkHttp.java` | `Request.Builder().header(...)` | Gson manual | Hilo de fondo (se pasa al principal con `Handler`) |
+| Retrofit | `laboratorio/ClienteRetrofit.java` | `@Header` en `BitacoraApi` | `GsonConverterFactory` | Principal |
+
+Las tres usan el mismo tiempo de espera (10 s) y sin reintentos, para comparar en igualdad de condiciones.
+
+Escenarios de falla: API detenida, modo avión, tiempo agotado (`GET /api/diagnostico/lento?segundos=15`, endpoint **temporal** solo en Development), sin token o token alterado (401) y error 500 (`GET /api/diagnostico/error`).
+
 ## Integrantes y participación
 
 | Integrante | Rama | Responsabilidades |
